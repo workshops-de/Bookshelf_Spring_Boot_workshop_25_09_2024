@@ -23,6 +23,12 @@ class BookService {
         return books;
     }
 
+    public Book createBook(Book book) {
+        books.add(book);
+
+        return book;
+    }
+
     Book searchBookByIsbn(String isbn) throws BookNotFoundException {
         return this.books.stream().filter(book -> hasIsbn(book, isbn)).findFirst().orElseThrow(BookNotFoundException::new);
     }

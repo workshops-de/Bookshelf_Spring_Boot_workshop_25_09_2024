@@ -1,0 +1,17 @@
+application:
+  title: '@project.name@'
+  version: '@project.version@'
+
+---
+spring:
+  config:
+    activate:
+      on-profile:
+        - prod
+
+server:
+  port: 8090
+
+springdoc:
+  api-docs:
+    enabled: false
