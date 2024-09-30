@@ -12,33 +12,30 @@ class BookService {
 
     private final BookRepository bookRepository;
 
-    private List<Book> books;
-
-    @PostConstruct
-    void init() {
-        books = bookRepository.findAllBooks();
-    }
-
     List<Book> getAllBooks() {
-        return books;
+        return bookRepository.findAll();
     }
 
     public Book createBook(Book book) {
-        books.add(book);
+        bookRepository.create(book);
 
         return book;
     }
 
+    void deleteBook(Book book) {
+        bookRepository.delete(book);
+    }
+
     Book searchBookByIsbn(String isbn) throws BookNotFoundException {
-        return this.books.stream().filter(book -> hasIsbn(book, isbn)).findFirst().orElseThrow(BookNotFoundException::new);
+        return getAllBooks().stream().filter(book -> hasIsbn(book, isbn)).findFirst().orElseThrow(BookNotFoundException::new);
     }
 
     Book searchBookByAuthor(String author) throws BookNotFoundException {
-        return this.books.stream().filter(book -> hasAuthor(book, author)).findFirst().orElseThrow(BookNotFoundException::new);
+        return getAllBooks().stream().filter(book -> hasAuthor(book, author)).findFirst().orElseThrow(BookNotFoundException::new);
     }
 
     List<Book> searchBooks(BookSearchRequest request) {
-        return this.books.stream()
+        return getAllBooks().stream()
                 .filter(book -> hasAuthor(book, request.author()))
                 .filter(book -> hasIsbn(book, request.isbn()))
                 .toList();
