@@ -2,7 +2,10 @@ package de.workshops.bookshelf.config;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.Collections;
+import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,6 +18,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.security.web.csrf.CsrfTokenRequestHandler;
 import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
 
 @Configuration
@@ -25,10 +30,27 @@ public class WebSecurityConfig {
 
   @Bean
   SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-    // see https://docs.spring.io/spring-security/reference/5.8/migration/servlet/exploits.html and
-    // https://docs.spring.io/spring-security/reference/5.8/migration/servlet/exploits.html#_i_am_using_angularjs_or_another_javascript_framework
-    CookieCsrfTokenRepository tokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+    // see https://docs.spring.io/spring-security/reference/5.8/migration/servlet/exploits.html,
+    // https://docs.spring.io/spring-security/reference/5.8/migration/servlet/exploits.html#_i_am_using_angularjs_or_another_javascript_framework, and
+    // https://github.com/spring-projects/spring-security/issues/12915#issuecomment-1482931700
     XorCsrfTokenRequestAttributeHandler delegate = new XorCsrfTokenRequestAttributeHandler();
+    delegate.setCsrfRequestAttributeName("_csrf");
+    CsrfTokenRequestHandler requestHandler = new CsrfTokenRequestHandler() {
+      @Override
+      public void handle(
+          HttpServletRequest request, HttpServletResponse response, Supplier<CsrfToken> csrfToken) {
+        delegate.handle(request, response, csrfToken);
+      }
+
+      @Override
+      public String resolveCsrfTokenValue(HttpServletRequest request, CsrfToken csrfToken) {
+        String tokenValue = CsrfTokenRequestHandler.super.resolveCsrfTokenValue(request, csrfToken);
+        if (tokenValue.length() == 36) {
+          return tokenValue;
+        }
+        return delegate.resolveCsrfTokenValue(request, csrfToken);
+      }
+    };
 
     return http
         .authorizeHttpRequests(
@@ -38,15 +60,13 @@ public class WebSecurityConfig {
         )
         .csrf(
             csrf -> csrf
-                .csrfTokenRepository(tokenRepository)
-                .csrfTokenRequestHandler(delegate::handle)
-            // delegate::handle is required here to ensure proper CSRF token handling
+                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                .csrfTokenRequestHandler(requestHandler)
         )
         .httpBasic(withDefaults())
         .formLogin(withDefaults())
         .build();
   }
-
   @Bean
   UserDetailsService userDetailsService() {
     return username -> {
