@@ -12,14 +12,15 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @Slf4j
 public class BookshelfApplication {
 
-	private final BookshelfProperties bookshelfProperties;
+  private final BookshelfProperties bookshelfProperties;
 
-	public static void main(String[] args) {
-		SpringApplication.run(BookshelfApplication.class, args);
-	}
+  public static void main(String[] args) {
+    SpringApplication.run(BookshelfApplication.class, args);
+  }
 
-	@PostConstruct
-	private void printBookshelfProperties() {
-		log.info("Bookshelf properties: {}, {}", bookshelfProperties.getSomeNumber(), bookshelfProperties.getSomeText());
-	}
+  @PostConstruct
+  private void printBookshelfProperties() {
+    log.info("Bookshelf properties: {}, {}", bookshelfProperties.getSomeNumber(),
+        bookshelfProperties.getSomeText());
+  }
 }

@@ -11,12 +11,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequiredArgsConstructor
 public class BookController {
 
-    private final BookService bookService;
+  private final BookService bookService;
 
-    @GetMapping
-    public String getAllBooks(Model model) {
-        model.addAttribute("books", bookService.getAllBooks());
+  @GetMapping
+  public String getAllBooks(Model model) {
+    model.addAttribute("books", bookService.getAllBooks());
 
-        return "books";
-    }
+    return "books";
+  }
 }

@@ -1,41 +1,15 @@
 package de.workshops.bookshelf.book;
 
 import java.util.List;
-import lombok.RequiredArgsConstructor;
-import org.springframework.jdbc.core.BeanPropertyRowMapper;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-@RequiredArgsConstructor
-class BookRepository {
+interface BookRepository extends ListCrudRepository<Book, Long> {
 
-    private final JdbcTemplate jdbcTemplate;
+  Book findByIsbn(String isbn);
 
-    List<Book> findAll() {
-        String sql = "SELECT * FROM book";
+  Book findByAuthorContaining(String author);
 
-        return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(Book.class));
-    }
-
-    public void create(Book book) {
-        String sql = "INSERT INTO book (title, description, author, isbn) VALUES (?, ?, ?, ?)";
-
-        jdbcTemplate.update(
-            sql,
-            book.getTitle(),
-            book.getDescription(),
-            book.getAuthor(),
-            book.getIsbn()
-        );
-    }
-
-    public void delete(Book book) {
-        String sql = "DELETE FROM book WHERE isbn = ?";
-
-        jdbcTemplate.update(
-            sql,
-            book.getIsbn()
-        );
-    }
+  List<Book> findByIsbnAndAuthorContaining(String isbn, String author);
 }

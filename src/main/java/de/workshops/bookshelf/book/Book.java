@@ -25,51 +25,51 @@ import org.hibernate.proxy.HibernateProxy;
 @Entity
 public class Book {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JsonIgnore
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @JsonIgnore
+  private Long id;
 
-    private String title;
+  private String title;
 
-    @Column(length = 1000)
-    private String description;
+  @Column(length = 1000)
+  private String description;
 
-    private String author;
+  private String author;
 
-    private String isbn;
+  private String isbn;
 
-    @Override
-    public final boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) {
-            return false;
-        }
-
-        Class<?> oEffectiveClass = o.getClass();
-        Class<?> thisEffectiveClass = this.getClass();
-        if (o instanceof HibernateProxy hibernateProxy) {
-            oEffectiveClass = hibernateProxy.getHibernateLazyInitializer().getPersistentClass();
-            thisEffectiveClass = hibernateProxy.getHibernateLazyInitializer().getPersistentClass();
-        }
-        if (thisEffectiveClass != oEffectiveClass) {
-            return false;
-        }
-
-        Book book = (Book) o;
-
-        return getId() != null && Objects.equals(getId(), book.getId());
+  @Override
+  public final boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) {
+      return false;
     }
 
-    @Override
-    public final int hashCode() {
-        int hashCode = getClass().hashCode();
-        if (this instanceof HibernateProxy hibernateProxy) {
-            hashCode = hibernateProxy.getHibernateLazyInitializer().getPersistentClass().hashCode();
-        }
-
-        return hashCode;
+    Class<?> oEffectiveClass = o.getClass();
+    Class<?> thisEffectiveClass = this.getClass();
+    if (o instanceof HibernateProxy hibernateProxy) {
+      oEffectiveClass = hibernateProxy.getHibernateLazyInitializer().getPersistentClass();
+      thisEffectiveClass = hibernateProxy.getHibernateLazyInitializer().getPersistentClass();
     }
+    if (thisEffectiveClass != oEffectiveClass) {
+      return false;
+    }
+
+    Book book = (Book) o;
+
+    return getId() != null && Objects.equals(getId(), book.getId());
+  }
+
+  @Override
+  public final int hashCode() {
+    int hashCode = getClass().hashCode();
+    if (this instanceof HibernateProxy hibernateProxy) {
+      hashCode = hibernateProxy.getHibernateLazyInitializer().getPersistentClass().hashCode();
+    }
+
+    return hashCode;
+  }
 }

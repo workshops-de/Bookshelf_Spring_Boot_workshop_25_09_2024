@@ -9,11 +9,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 @SpringBootTest
 class BookRestControllerTest {
 
-    @Autowired
-    private BookRestController bookRestController;
+  @Autowired
+  private BookRestController bookRestController;
 
-    @Test
-    void getAllBooks() {
-        assertEquals(3, bookRestController.getAllBooks().size());
-    }
+  @Test
+  void getAllBooks() {
+    assertEquals(3, bookRestController.getAllBooks().size());
+  }
 }

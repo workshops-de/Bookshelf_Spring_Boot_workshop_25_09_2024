@@ -12,12 +12,12 @@ import org.springframework.test.context.junit.jupiter.EnabledIf;
 @ActiveProfiles("prod")
 class EnvironmentTest {
 
-	@Value("${server.port:8080}")
-	private int port;
+  @Value("${server.port:8080}")
+  private int port;
 
-	@Test
-	@EnabledIf(expression = "#{environment.acceptsProfiles('prod')}", loadContext = true)
-	void verifyProdPort() {
-		assertEquals(8090, port);
-	}
+  @Test
+  @EnabledIf(expression = "#{environment.acceptsProfiles('prod')}", loadContext = true)
+  void verifyProdPort() {
+    assertEquals(8090, port);
+  }
 }

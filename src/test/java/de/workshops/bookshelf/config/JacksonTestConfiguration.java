@@ -8,8 +8,8 @@ import org.springframework.context.annotation.Bean;
 @TestConfiguration
 class JacksonTestConfiguration {
 
-    @Bean
-    Jackson2ObjectMapperBuilderCustomizer jsonCustomizer() {
-        return builder -> builder.featuresToEnable(SerializationFeature.INDENT_OUTPUT);
-    }
+  @Bean
+  Jackson2ObjectMapperBuilderCustomizer jsonCustomizer() {
+    return builder -> builder.featuresToEnable(SerializationFeature.INDENT_OUTPUT);
+  }
 }

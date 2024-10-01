@@ -10,12 +10,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 @SpringBootTest
 class BookshelfApplicationTests {
 
-	@Autowired
-	private BookshelfProperties bookshelfProperties;
+  @Autowired
+  private BookshelfProperties bookshelfProperties;
 
-	@Test
-	void contextLoads() {
-		assertEquals(11, bookshelfProperties.getSomeNumber());
-		assertEquals("More information", bookshelfProperties.getSomeText());
-	}
+  @Test
+  void contextLoads() {
+    assertEquals(11, bookshelfProperties.getSomeNumber());
+    assertEquals("More information", bookshelfProperties.getSomeText());
+  }
 }

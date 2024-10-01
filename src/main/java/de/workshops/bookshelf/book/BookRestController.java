@@ -22,37 +22,38 @@ import org.springframework.web.bind.annotation.RestController;
 @Validated
 class BookRestController {
 
-    private final BookService bookService;
+  private final BookService bookService;
 
-    @GetMapping
-    List<Book> getAllBooks() {
-        return bookService.getAllBooks();
-    }
+  @GetMapping
+  List<Book> getAllBooks() {
+    return bookService.getAllBooks();
+  }
 
-    @GetMapping("/{isbn}")
-    Book getSingleBook(@PathVariable String isbn) throws BookNotFoundException {
-        return bookService.searchBookByIsbn(isbn);
-    }
+  @GetMapping("/{isbn}")
+  Book getSingleBook(@PathVariable String isbn) throws BookNotFoundException {
+    return bookService.searchBookByIsbn(isbn);
+  }
 
-    @GetMapping(params = "author")
-    Book searchBookByAuthor(@RequestParam @NotBlank @Size(min = 3) String author) throws BookNotFoundException {
-        return bookService.searchBookByAuthor(author);
-    }
+  @GetMapping(params = "author")
+  Book searchBookByAuthor(@RequestParam @NotBlank @Size(min = 3) String author)
+      throws BookNotFoundException {
+    return bookService.searchBookByAuthor(author);
+  }
 
-    @PostMapping("/search")
-    List<Book> searchBooks(@RequestBody @Valid BookSearchRequest request) {
-        return bookService.searchBooks(request);
-    }
+  @PostMapping("/search")
+  List<Book> searchBooks(@RequestBody @Valid BookSearchRequest request) {
+    return bookService.searchBooks(request);
+  }
 
-    @PostMapping
-    public Book createBook(@RequestBody Book book) {
-        return bookService.createBook(book);
-    }
+  @PostMapping
+  public Book createBook(@RequestBody Book book) {
+    return bookService.createBook(book);
+  }
 
-    @DeleteMapping("/{isbn}")
-    public ResponseEntity<String> deleteBook(@PathVariable String isbn) throws BookNotFoundException {
-        bookService.deleteBook(bookService.searchBookByIsbn(isbn));
+  @DeleteMapping("/{isbn}")
+  public ResponseEntity<String> deleteBook(@PathVariable String isbn) throws BookNotFoundException {
+    bookService.deleteBook(bookService.searchBookByIsbn(isbn));
 
-        return ResponseEntity.ok("OK");
-    }
+    return ResponseEntity.ok("OK");
+  }
 }
