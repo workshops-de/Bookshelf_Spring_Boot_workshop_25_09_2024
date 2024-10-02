@@ -56,6 +56,7 @@ public class WebSecurityConfig {
         .authorizeHttpRequests(
             authorize ->
                 authorize
+                    .requestMatchers("/actuator/**").permitAll()
                     .anyRequest().authenticated()
         )
         .csrf(

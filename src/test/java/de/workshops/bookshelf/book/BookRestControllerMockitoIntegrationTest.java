@@ -15,6 +15,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
@@ -38,6 +39,7 @@ class BookRestControllerMockitoIntegrationTest {
   private BookService bookService;
 
   @Test
+  @WithMockUser
   void getAllBooks() throws Exception {
     List<Book> mockedBookList = new ArrayList<>();
     mockedBookList.add(new Book());

@@ -5,10 +5,12 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import de.workshops.bookshelf.config.BookshelfApplicationProperties;
 import io.restassured.RestAssured;
 import io.restassured.module.mockmvc.RestAssuredMockMvc;
 import java.util.List;
@@ -22,11 +24,16 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
+import org.springframework.security.web.FilterChainProxy;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
@@ -41,6 +48,12 @@ class BookRestControllerIntegrationTest {
   @Autowired
   private BookRestController bookRestController;
 
+  @Autowired
+  private FilterChainProxy springSecurityFilterChain;
+
+  @Autowired
+  private BookshelfApplicationProperties applicationProperties;
+
   @LocalServerPort
   private int port;
 
@@ -54,6 +67,7 @@ class BookRestControllerIntegrationTest {
   }
 
   @Test
+  @WithMockUser
   void getAllBooks() throws Exception {
     MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.get("/book"))
         .andDo(MockMvcResultHandlers.print())
@@ -71,8 +85,13 @@ class BookRestControllerIntegrationTest {
   }
 
   @Test
+  @WithMockUser
   void testWithRestAssuredMockMvc() {
-    RestAssuredMockMvc.standaloneSetup(bookRestController);
+    RestAssuredMockMvc.standaloneSetup(
+        MockMvcBuilders
+            .standaloneSetup(bookRestController)
+            .apply(SecurityMockMvcConfigurers.springSecurity(springSecurityFilterChain))
+    );
     RestAssuredMockMvc.
         given().
         log().all().
@@ -89,6 +108,10 @@ class BookRestControllerIntegrationTest {
     RestAssured.port = port;
     RestAssured.
         given().
+        auth().basic(
+            "dbUser",
+            applicationProperties.getCredentials().get("user").password()
+        ).
         log().all().
         when().
         get("/book").
@@ -99,19 +122,66 @@ class BookRestControllerIntegrationTest {
   }
 
   @Test
+  @WithMockUser(roles = {"ADMIN"})
   void createBook() throws Exception {
     String author = "Eric Evans";
     String title = "Domain-Driven Design: Tackling Complexity in the Heart of Software";
     String isbn = "978-0321125217";
     String description = "This is not a book about specific technologies. It offers readers a systematic approach to domain-driven design, presenting an extensive set of design best practices, experience-based techniques, and fundamental principles that facilitate the development of software projects facing complex domains.";
 
-    Book expectedBook = new Book();
-    expectedBook.setAuthor(author);
-    expectedBook.setTitle(title);
-    expectedBook.setIsbn(isbn);
-    expectedBook.setDescription(description);
+    Book expectedBook = generateExpectedBook(
+        author,
+        title,
+        isbn,
+        description
+    );
 
-    var mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/book")
+    ResultMatcher expectedHttpStatus = MockMvcResultMatchers.status().isOk();
+    var mvcResult = sendCreateBookRequest(
+        isbn,
+        title,
+        author,
+        description,
+        expectedHttpStatus
+    );
+    String jsonPayload = mvcResult.getResponse().getContentAsString();
+
+    Book book = objectMapper.readValue(jsonPayload, Book.class);
+
+    assertThat(book)
+        .usingRecursiveComparison()
+        .ignoringFields("id")
+        .isEqualTo(expectedBook);
+
+    // Restore previous database state by deleting the book again.
+    mockMvc.perform(MockMvcRequestBuilders.delete("/book/{isbn}", isbn)
+            .contentType(MediaType.APPLICATION_JSON)
+            .with(csrf()))
+        .andDo(MockMvcResultHandlers.print())
+        .andExpect(MockMvcResultMatchers.status().isOk());
+  }
+
+  @Test
+  @WithMockUser
+  void createBookIsUnauthorized() throws Exception {
+    String author = "Eric Evans";
+    String title = "Domain-Driven Design: Tackling Complexity in the Heart of Software";
+    String isbn = "978-0321125217";
+    String description = "This is not a book about specific technologies. It offers readers a systematic approach to domain-driven design, presenting an extensive set of design best practices, experience-based techniques, and fundamental principles that facilitate the development of software projects facing complex domains.";
+
+    ResultMatcher expectedHttpStatus = MockMvcResultMatchers.status().isForbidden();
+    sendCreateBookRequest(isbn, title, author, description, expectedHttpStatus);
+  }
+
+  private MvcResult sendCreateBookRequest(
+      String isbn,
+      String title,
+      String author,
+      String description,
+      ResultMatcher expectedHttpStatus
+  )
+      throws Exception {
+    return mockMvc.perform(MockMvcRequestBuilders.post("/book")
             .content(
                 """
                     {
@@ -128,16 +198,19 @@ class BookRestControllerIntegrationTest {
                         description
                     )
             )
-            .contentType(MediaType.APPLICATION_JSON))
-        .andExpect(MockMvcResultMatchers.status().isOk())
+            .contentType(MediaType.APPLICATION_JSON)
+            .with(csrf()))
+        .andExpect(expectedHttpStatus)
         .andReturn();
-    String jsonPayload = mvcResult.getResponse().getContentAsString();
+  }
 
-    Book book = objectMapper.readValue(jsonPayload, Book.class);
-
-    assertThat(book)
-        .usingRecursiveComparison()
-        .ignoringFields("id")
-        .isEqualTo(expectedBook);
+  private Book generateExpectedBook(String author, String title, String isbn, String description) {
+    return Book
+        .builder()
+        .author(author)
+        .title(title)
+        .isbn(isbn)
+        .description(description)
+        .build();
   }
 }
